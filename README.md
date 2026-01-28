@@ -38,16 +38,18 @@ Using AWS KMS provides the following advantages:
 
 
 <pre>
-aws_csfle/
+.
+│   README.md
 │
-├── automatic_csfle.py        # Automatic encryption & decryption
-├── dke_from_aws_kms.py       # Create Data Encryption Key (DEK)
-├── key_vault_db.py           # Key vault database & collection setup
-├── requirements.txt
-├── .env.example              # Environment variable template
+├───CSFLE_AWS_KMS
+│       .env.example
+│       automatic_csfle.py
+│       dke_from_aws_kms.py
+│       key_vault_db.py
+│       requirements.txt
 │
-└── CSFLE_AWS_KMS/
-    └── README.md
+└───ctipt_file
+        mongo_crypt_v1.dll
 </pre>
 
 
