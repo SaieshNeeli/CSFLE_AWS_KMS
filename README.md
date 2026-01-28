@@ -102,3 +102,58 @@ MongoDB uses a dedicated key vault collection to store encryption metadata.
 
 Run the following command:
 
+python key_vault_db.py
+
+
+This creates the key vault database and collection used by CSFLE.
+
+---
+
+## Step 4 Create the Data Encryption Key
+
+The Data Encryption Key is encrypted using the AWS KMS Customer Managed Key.
+
+Run:
+
+python dke_from_aws_kms.py
+
+
+The generated `dek_id` is required for encrypting fields.  
+Store this value securely as an environment variable.
+
+---
+
+## Step 5 Automatic Encryption and Decryption
+
+Run the application using:
+
+python automatic_csfle.py
+
+
+This script automatically encrypts sensitive fields before inserting data into MongoDB and transparently decrypts them when data is read.
+
+No manual cryptographic logic is required.
+
+---
+
+## Example Use Case
+
+This implementation is suitable for protecting sensitive fields such as:
+
+- Patient names
+- Aadhaar or PAN numbers
+- Phone numbers
+- Medical or financial details
+
+MongoDB stores only encrypted data and never has access to plaintext values.
+
+---
+
+## Security Best Practices
+
+- Never commit AWS credentials to version control
+- Use IAM roles instead of static AWS keys in production environments
+- Rotate AWS KMS keys periodically
+- Apply least-privilege IAM policies for KMS access
+
+
