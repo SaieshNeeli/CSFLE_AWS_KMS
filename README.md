@@ -2,36 +2,28 @@ MongoDB CSFLE with AWS KMS (Python)
 
 This repository demonstrates MongoDB Client-Side Field Level Encryption (CSFLE) using AWS KMS as the Key Management Service.
 
-It shows how to:
+The project explains how to configure AWS KMS, create a Data Encryption Key (DEK), store encryption metadata in MongoDB, and automatically encrypt and decrypt sensitive fields on the client side.
 
-Configure AWS KMS
+No plaintext sensitive data is stored in MongoDB.
+Encryption and decryption happen entirely on the client.
 
-Create a Data Encryption Key (DEK)
+Why CSFLE with AWS KMS
 
-Store encryption metadata in MongoDB Key Vault
+Client-Side Field Level Encryption protects sensitive data such as personal, financial, and health information.
 
-Automatically encrypt and decrypt sensitive fields on the client side
+With AWS KMS:
 
-✅ No plaintext sensitive data is stored in MongoDB
-✅ Encryption & decryption happen entirely on the client
+Encryption keys are never exposed to MongoDB
 
-🧠 Why CSFLE with AWS KMS?
+Keys are centrally managed
 
-Protects PII / sensitive data (health, financial, identity)
+Audit logs are available using CloudTrail
 
-Encryption keys are never exposed to the database
+Key rotation is supported
 
-AWS KMS provides:
+Suitable for compliance requirements such as PCI, HIPAA, and SOC
 
-Centralized key management
-
-Audit logs (CloudTrail)
-
-Key rotation
-
-Compliance readiness (PCI, HIPAA, SOC)
-
-📁 Project Structure
+Project Structure
 <pre>
 aws_csfle/
 │
@@ -47,72 +39,91 @@ aws_csfle/
 
 Prerequisites
 
-Python 3.9+
+Python version 3.9 or higher
 
-MongoDB 6.0+ (Atlas or self-hosted)
+MongoDB version 6.0 or higher (Atlas or self hosted)
 
-AWS Account with KMS access
+AWS account with KMS access
 
-An AWS Customer Managed Key (CMK)
+One AWS Customer Managed Key
 
- Step 1: AWS KMS Setup
+Step 1 AWS KMS Setup
 
-Go to AWS Console → KMS
+Log in to the AWS Console.
 
-Create a Customer Managed Key (Symmetric)
+Go to the Key Management Service section.
 
-Note down the Key ARN
+Create a new Customer Managed Key using symmetric encryption.
 
-AWS documentation (official):
- https://www.mongodb.com/docs/manual/core/queryable-encryption/fundamentals/kms-providers/#std-label-qe-fundamentals-kms-providers-aws
+Copy and save the Key ARN.
 
-Step 2: Environment Variables
+Official MongoDB documentation for AWS KMS setup:
+https://www.mongodb.com/docs/manual/core/queryable-encryption/fundamentals/kms-providers/#std-label-qe-fundamentals-kms-providers-aws
 
-Create a .env file using the .env.example that i have uploded in the project repo
+Step 2 Environment Variables
 
-Step 3: Create Key Vault
+Create a .env file using the .env.example file provided in the repository.
 
-MongoDB stores encryption metadata in a key vault collection.
+Fill in values for:
+
+MongoDB connection string
+
+AWS access key
+
+AWS secret key
+
+AWS region
+
+KMS key ARN
+
+Key vault database and collection names
+
+Do not commit the .env file to GitHub.
+
+Step 3 Create Key Vault
+
+MongoDB uses a key vault collection to store encryption metadata.
+
+Run the following command:
 
 python key_vault_db.py
-This initializes:
-__keyVault.__keyVaultCollection
 
-Step 4: Create Data Encryption Key (DEK)
 
-The DEK is encrypted using the AWS KMS CMK.
+This creates the key vault database and collection.
+
+Step 4 Create Data Encryption Key
+
+The Data Encryption Key is encrypted using the AWS KMS Customer Managed Key.
+
+Run:
 
 python dke_from_aws_kms.py
 
-The generated dek_id is used for field encryption
-Store it securely (env variable)
 
-Step 5: Automatic Encryption & Decryption
+The generated dek_id is required for encrypting fields.
+Store this value securely as an environment variable.
+
+Step 5 Automatic Encryption and Decryption
 
 Run:
 
 python automatic_csfle.py
 
-This script:
 
-Encrypts sensitive fields automatically before insert
+This script automatically encrypts sensitive fields before inserting data into MongoDB and decrypts them when reading.
 
-Transparently decrypts data during read
-
-Requires no manual crypto logic
+No manual cryptographic logic is required.
 
 Example Use Case
 
-Sensitive fields like:
+This setup is suitable for encrypting sensitive fields such as:
 
 Patient name
 
-Aadhaar / PAN
+Aadhaar or PAN number
 
 Phone number
 
-Medical details
+Medical or financial details
 
-are encrypted before reaching MongoDB.
-
-MongoDB only sees ciphertext, not plaintext.
+MongoDB stores only encrypted data and never sees plaintext values.
