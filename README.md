@@ -230,6 +230,8 @@ MongoDB stores only encrypted data and never has access to plaintext values.
 - Designed for both development and production
 - Docker-based deployment eliminates platform-specific crypt dependencies
 
+---
+
 ##Output 
 
 
