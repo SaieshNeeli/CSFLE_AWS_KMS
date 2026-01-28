@@ -230,11 +230,13 @@ MongoDB stores only encrypted data and never has access to plaintext values.
 - Designed for both development and production
 - Docker-based deployment eliminates platform-specific crypt dependencies
 
-##Output :
+##Output 
 
 
 <img width="801" height="310" alt="Screenshot 2026-01-28 101739" src="https://github.com/user-attachments/assets/11a1d211-4842-4d75-b807-d855ef472b00" />
 
+
 ##In MongoDB
+
 
 <img width="650" height="104" alt="Screenshot 2026-01-28 101249" src="https://github.com/user-attachments/assets/eebb8b24-2e8b-4c2e-9b28-0fafa54d23e2" />
