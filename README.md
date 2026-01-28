@@ -2,7 +2,7 @@
 
 This repository demonstrates MongoDB Client-Side Field Level Encryption (CSFLE) using AWS Key Management Service (KMS).
 
-It explains how to securely encrypt sensitive fields on the client side before data is stored in MongoDB, ensuring that the database never sees plaintext data.
+The project supports both local Windows development and Linux-based deployment using Docker, while ensuring that sensitive data is always encrypted on the client side before being stored in MongoDB.
 
 ---
 
@@ -10,10 +10,12 @@ It explains how to securely encrypt sensitive fields on the client side before d
 
 This project shows how to:
 
-- Configure AWS KMS
+- Configure AWS KMS for CSFLE
 - Create a Data Encryption Key (DEK)
 - Store encryption metadata in the MongoDB key vault
 - Automatically encrypt and decrypt sensitive fields on the client
+- Run CSFLE on Windows using a crypt shared library
+- Run CSFLE on Linux using Docker without requiring Windows DLL files
 
 No plaintext sensitive data is stored in MongoDB.  
 All encryption and decryption operations happen entirely on the client.
@@ -26,15 +28,16 @@ Client-Side Field Level Encryption is designed to protect highly sensitive data 
 
 Using AWS KMS provides the following advantages:
 
-- Encryption keys are never exposed to the database
-- Centralized and managed key lifecycle
+- Encryption keys are never exposed to MongoDB
+- Centralized key management
 - Audit logs using AWS CloudTrail
-- Built-in key rotation support
-- Compliance readiness for standards such as PCI, HIPAA, and SOC
+- Automatic key rotation support
+- Compliance readiness for PCI, HIPAA, and SOC standards
 
 ---
 
 ## Project Structure
+
 
 
 <pre>
@@ -45,6 +48,8 @@ Using AWS KMS provides the following advantages:
 │       .env.example
 │       automatic_csfle.py
 │       dke_from_aws_kms.py
+│       docker-compose.yml
+│       dockerfile
 │       key_vault_db.py
 │       requirements.txt
 │
@@ -55,63 +60,109 @@ Using AWS KMS provides the following advantages:
 
 ---
 
-## Prerequisites
-
-Before running this project, ensure the following requirements are met:
-
-- Python version 3.9 or higher
-- MongoDB version 6.0 or higher (Atlas or self-hosted)
-- AWS account with access to KMS
-- One AWS Customer Managed Key
 
 ---
 
-## Step 1 AWS KMS Configuration
+## Prerequisites
+
+- Python version 3.9 or higher
+- MongoDB version 6.0 or higher (Atlas or self-hosted)
+- AWS account with KMS access
+- One AWS Customer Managed Key
+- Docker (for Linux or production deployment)
+
+---
+
+## AWS KMS Configuration
 
 Log in to the AWS Console.
 
-Navigate to the Key Management Service section.
+Navigate to the Key Management Service.
 
 Create a new Customer Managed Key using symmetric encryption.
 
 Copy and securely store the Key ARN.
 
-Official MongoDB documentation for AWS KMS setup:  
+Official MongoDB documentation:
 https://www.mongodb.com/docs/manual/core/queryable-encryption/fundamentals/kms-providers/#std-label-qe-fundamentals-kms-providers-aws
 
 ---
 
-## Step 2 Environment Variable Setup
+## Environment Variable Setup
 
-Create a `.env` file using the `.env.example` file provided in the repository.
+Create a `.env` file using the `.env.example` file provided.
 
-Populate the file with the following information:
+Set values for:
 
 - MongoDB connection string
 - AWS access key
 - AWS secret key
 - AWS region
 - AWS KMS Key ARN
-- Key vault database and collection names
+- Key vault database and collection
+- Deployment environment
+
+Example:
+
+ENVIRONMENT=local
+
+or for deployment:
+
+ENVIRONMENT=deployment
 
 Do not commit the `.env` file to version control.
 
 ---
 
-## Step 3 Create the MongoDB Key Vault
+## How CSFLE Works Across Environments
 
-MongoDB uses a dedicated key vault collection to store encryption metadata.
+This project automatically switches encryption behavior based on the environment.
 
-Run the following command:
+### Local Development (Windows)
 
-python key_vault_db.py
+- Uses `mongo_crypt_v1.dll`
+- Requires the crypt shared library path
+- Intended for local testing and development
 
+The DLL file is located at:
+ctipt_file/mongo_crypt_v1.dll
 
-This creates the key vault database and collection used by CSFLE.
+### Deployment (Linux / Docker)
+
+- Uses MongoDB crypt shared library installed inside the container
+- Does not require any Windows DLL files
+- Fully portable and production ready
 
 ---
 
-## Step 4 Create the Data Encryption Key
+## Environment-Based Encryption Logic
+
+The encryption configuration changes automatically based on the `ENVIRONMENT` variable.
+
+When running in deployment mode:
+- Uses system-installed crypt shared library
+- Skips DLL-specific configuration
+
+When running locally:
+- Explicitly loads the Windows DLL file
+
+This ensures cross-platform compatibility without code changes.
+
+---
+
+## Create the MongoDB Key Vault
+
+MongoDB stores encryption metadata in a key vault collection.
+
+Run:
+
+python key_vault_db.py
+
+This initializes the key vault database and collection.
+
+---
+
+## Create the Data Encryption Key
 
 The Data Encryption Key is encrypted using the AWS KMS Customer Managed Key.
 
@@ -119,18 +170,16 @@ Run:
 
 python dke_from_aws_kms.py
 
-
 The generated `dek_id` is required for encrypting fields.  
-Store this value securely as an environment variable.
+Store it securely as an environment variable.
 
 ---
 
-## Step 5 Automatic Encryption and Decryption
+## Automatic Encryption and Decryption
 
-Run the application using:
+Run locally:
 
 python automatic_csfle.py
-
 
 This script automatically encrypts sensitive fields before inserting data into MongoDB and transparently decrypts them when data is read.
 
@@ -138,14 +187,28 @@ No manual cryptographic logic is required.
 
 ---
 
+## Running with Docker (Linux / Production)
+
+Build the Docker image:
+
+docker build -t csfle-aws .
+
+Run the container:
+
+docker run --env-file .env csfle-aws
+
+The Docker image installs the MongoDB crypt shared library internally, enabling CSFLE without Windows dependencies.
+
+---
+
 ## Example Use Case
 
-This implementation is suitable for protecting sensitive fields such as:
+This implementation is suitable for encrypting sensitive fields such as:
 
 - Patient names
 - Aadhaar or PAN numbers
 - Phone numbers
-- Medical or financial details
+- Medical or financial data
 
 MongoDB stores only encrypted data and never has access to plaintext values.
 
@@ -153,9 +216,16 @@ MongoDB stores only encrypted data and never has access to plaintext values.
 
 ## Security Best Practices
 
-- Never commit AWS credentials to version control
-- Use IAM roles instead of static AWS keys in production environments
+- Never commit AWS credentials to GitHub
+- Use IAM roles instead of static access keys in production
 - Rotate AWS KMS keys periodically
-- Apply least-privilege IAM policies for KMS access
+- Apply least-privilege IAM policies
+- Store DEK identifiers securely
 
+---
 
+## Notes
+
+- This implementation uses Automatic CSFLE
+- Designed for both development and production
+- Docker-based deployment eliminates platform-specific crypt dependencies
