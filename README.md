@@ -1,4 +1,4 @@
-🔐 MongoDB CSFLE with AWS KMS (Python)
+MongoDB CSFLE with AWS KMS (Python)
 
 This repository demonstrates MongoDB Client-Side Field Level Encryption (CSFLE) using AWS KMS as the Key Management Service.
 
