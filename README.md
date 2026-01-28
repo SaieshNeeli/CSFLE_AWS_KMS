@@ -32,7 +32,7 @@ Key rotation
 Compliance readiness (PCI, HIPAA, SOC)
 
 📁 Project Structure
-
+<pre>
 aws_csfle/
 │
 ├── automatic_csfle.py        # Automatic encryption & decryption
@@ -43,7 +43,7 @@ aws_csfle/
 │
 └── CSFLE_AWS_KMS/
     └── README.md
-
+</pre>
 
 Prerequisites
 
