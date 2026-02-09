@@ -1,0 +1,29 @@
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libssl-dev libffi-dev build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install mongo_crypt_shared_v1
+# Using Debian 12 compatible version
+RUN curl -L https://downloads.mongodb.com/linux/mongo_crypt_shared_v1-linux-x86_64-enterprise-debian12-7.0.15.tgz --output mongo_crypt_shared.tgz \
+    && tar -xzf mongo_crypt_shared.tgz \
+    && mkdir -p /usr/local/lib \
+    && find . -name "mongo_crypt_v1.so" -exec cp {} /usr/local/lib/mongo_crypt_v1.so \; \
+    && rm -rf mongo_crypt_shared.tgz mongo_crypt_shared_v1-linux-x86_64-enterprise-debian12-7.0.15
+
+# Set path for the crypt shared library
+ENV CRYPT_SHARED_LIB_PATH=/usr/local/lib/mongo_crypt_v1.so
+
+# Upgrade pip and install pymongo with CSFLE support
+RUN pip install --upgrade pip
+RUN pip install "pymongo[encryption]" boto3
+
+# Set working directory
+WORKDIR /app
+
+# Copy app code
+COPY . .
+
+CMD ["python", "automatic_csfle.py"]

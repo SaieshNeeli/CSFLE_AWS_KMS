@@ -48,26 +48,21 @@ def setup_csfle():
     
     
     patient_schema = {f"{os.getenv('patient_db')}.{os.getenv('patient_collection')}": json_schema}  
-    CRYPT_LIB_PATH_TEST = r"C:\Users\SaiSivaPrakashNeeli\OneDrive - Kodefast\Desktop\git\CSFLE\crypt_file\mongo_crypt_v1.dll"  
+    # Use environment variable if set (for Docker/Linux), otherwise fallback to local DLL (for Windows)
+    CRYPT_LIB_PATH = os.getenv("CRYPT_SHARED_LIB_PATH", "helpers/auto_encrypt/mongo_crypt_v1.dll")
+
+    extra_options = {
+        "crypt_shared_lib_path": CRYPT_LIB_PATH
+    }
+
+    auto_encryption_opts = AutoEncryptionOpts(
+        kms_providers=kms_provider_credentials,
+        key_vault_namespace=key_vault_namespace,
+        schema_map=patient_schema,
+        mongocryptd_bypass_spawn=True,
+        **extra_options
+    )
     
-    # Use different encryption options based on environment
-    if os.getenv('ENVIRONMENT', 'local').lower() == 'deployment':
-        auto_encryption_opts = AutoEncryptionOpts(
-            kms_providers=kms_provider_credentials,
-            key_vault_namespace=key_vault_namespace,
-            schema_map=patient_schema,
-            mongocryptd_bypass_spawn=True
-        )
-    else:  # local development
-        extra_options = {
-            "crypt_shared_lib_path": CRYPT_LIB_PATH_TEST
-        }
-        auto_encryption_opts = AutoEncryptionOpts(
-            kms_provider_credentials,
-            key_vault_namespace,
-            schema_map=patient_schema,
-            **extra_options
-        )
    
     secure_client = MongoClient(connection_string, auto_encryption_opts=auto_encryption_opts)
  
